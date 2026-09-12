@@ -1,10 +1,14 @@
 # LidFold
 
-在 MacBook 上随真实开合角度折叠桌面的本地 macOS 原型。灵感来自 [Bendy](https://trybendy.app/)，独立实现，不包含其代码或素材。
+LidFold 是一个运行在 MacBook 上的桌面视觉效果工具。缓慢合上屏幕时，桌面与应用画面随开合角度折叠；展开屏幕后，画面恢复正常。
+
+当前为实验性版本。画面仅在本机内存中处理，不保存、不上传，也不采集音频。
 
 ## 运行
 
-需要 macOS 14+、带可读取开合角度传感器的 MacBook，以及 Xcode 命令行工具。构建需要钥匙串中有效的 Apple Development 或 Developer ID Application 签名证书。当前开发机为 M4 MacBook Pro（Mac16,1）。
+最低部署目标为 macOS 14，需要带可读取开合角度传感器的 MacBook，以及 Xcode 命令行工具。构建需要钥匙串中有效的 Apple Development 或 Developer ID Application 签名证书。
+
+目前已在 M4 MacBook Pro（Mac16,1）、macOS 26.6.2 上验证；其他机型和系统版本尚未完成兼容性测试。
 
 ```sh
 bash scripts/test.sh
@@ -39,6 +43,8 @@ open dist/LidFold.app
 ```
 
 此命令不是日常构建步骤，不会自动授予权限。后续使用相同证书身份的构建可匹配现有授权。
+
+## 使用方式
 
 - 默认屏幕小于 105° 时开始折叠，大于等于该角度时完全隐藏效果。设置窗口可调为 75–130°。
 - 缓慢合上屏幕体验真实联动，或在效果页点击「预览 5 秒」自动演示，结束后返回设置。
