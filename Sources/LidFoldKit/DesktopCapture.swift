@@ -8,6 +8,7 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
     private var generation = SessionToken()
     var onFrame: ((CVPixelBuffer) -> Void)?
     var onFailure: ((Error) -> Void)?
+    var onUnavailable: (() -> Void)?
 
     // All state and output delivery are confined to the main queue.
     @MainActor func start(displayID: CGDirectDisplayID) async throws {
@@ -63,7 +64,11 @@ final class DesktopCapture: NSObject, SCStreamOutput, SCStreamDelegate {
         switch status {
         case .complete:
             if let buffer = sampleBuffer.imageBuffer { onFrame?(buffer) }
-        case .blank, .suspended, .stopped:
+        case .blank, .suspended:
+            // May precede the sleep notification. Do not turn a temporary blank
+            // frame into a manual pause, or wake recovery loses user intent.
+            onUnavailable?()
+        case .stopped:
             onFailure?(LidFoldError.message("屏幕捕获已中断，效果已暂停。"))
         default: break // Idle frames are normal on a static desktop.
         }
