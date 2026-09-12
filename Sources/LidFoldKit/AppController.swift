@@ -12,6 +12,8 @@ public final class AppController: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var enabledItem: NSMenuItem!
     private var enabled = false
+    private var permissionGate = ScreenPermissionGate()
+    private var waitingForPermission = false
     private var generation = SessionToken()
     private var fold = FoldState()
     private var angle: Double?
@@ -29,6 +31,7 @@ public final class AppController: NSObject, NSApplicationDelegate {
     private let angleLabel = NSTextField(labelWithString: "—°")
     private let enableButton = NSButton(title: "启用桌面效果", target: nil, action: nil)
     private let previewButton = NSButton(title: "预览 5 秒", target: nil, action: nil)
+    private let permissionButton = NSButton(title: "授权帮助…", target: nil, action: nil)
     private let thresholdLabel = NSTextField(labelWithString: "开始折叠：105°")
 
     public override init() { super.init() }
@@ -104,7 +107,10 @@ public final class AppController: NSObject, NSApplicationDelegate {
         previewButton.action = #selector(preview)
         previewButton.bezelStyle = .rounded
         previewButton.isEnabled = false
-        let buttons = NSStackView(views: [enableButton, previewButton])
+        permissionButton.target = self
+        permissionButton.action = #selector(showPermissionHelp)
+        permissionButton.bezelStyle = .rounded
+        let buttons = NSStackView(views: [enableButton, previewButton, permissionButton])
         buttons.spacing = 12
         let privacy = NSTextField(wrappingLabelWithString: "需要「屏幕与系统音频录制」权限；本应用仅处理画面，不采集音频，不保存或上传。\n⌘⇧Esc 随时暂停。仅作用于内置屏幕，不改变合盖睡眠。")
         privacy.font = .systemFont(ofSize: 11)
@@ -150,13 +156,12 @@ public final class AppController: NSObject, NSApplicationDelegate {
 
     private func enable() {
         guard !enabled else { return }
-        guard CGPreflightScreenCaptureAccess() else {
-            statusLabel.stringValue = "请在系统设置中允许 LidFold 录制屏幕，再回到这里启用；系统可能要求重新打开应用。"
-            if !CGRequestScreenCaptureAccess(), let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
-                NSWorkspace.shared.open(url)
-            }
+        guard permissionGate.authorize(preflight: CGPreflightScreenCaptureAccess, request: CGRequestScreenCaptureAccess) else {
+            waitingForPermission = true
+            statusLabel.stringValue = "屏幕录制授权尚未生效。已开启时请重新打开应用；点「授权帮助」查看恢复方法。"
             return
         }
+        waitingForPermission = false
         guard let screen = NSScreen.screens.first(where: { screen in
             guard let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? UInt32 else { return false }
             return CGDisplayIsBuiltin(id) != 0
@@ -259,6 +264,7 @@ public final class AppController: NSObject, NSApplicationDelegate {
     private func pause(message: String) {
         generation.invalidate()
         enabled = false
+        waitingForPermission = false
         captureStartedAt = 0
         previewUntil = 0
         hideOverlay()
@@ -296,6 +302,13 @@ public final class AppController: NSObject, NSApplicationDelegate {
     }
 
     private func installObservers() {
+        observers.append(NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            guard let self, self.waitingForPermission, !self.enabled,
+                  CGPreflightScreenCaptureAccess() else { return }
+            self.enable()
+        })
         // NSWorkspace session notifications describe user switching, not every screen lock.
         observers.append(DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name("com.apple.screenIsLocked"), object: nil, queue: .main
@@ -316,11 +329,48 @@ public final class AppController: NSObject, NSApplicationDelegate {
 
     @objc private func quitApp() { NSApp.terminate(nil) }
 
+    @objc private func showPermissionHelp() {
+        if enabled { pause(message: "已暂停，方便检查授权。") }
+        let alert = NSAlert()
+        alert.messageText = "让屏幕录制授权生效"
+        alert.informativeText = "在系统设置中允许 LidFold 录制屏幕。若开关已经开启，请重新打开应用。\n\n若曾使用旧的临时签名版本，请先从授权列表移除 LidFold，再添加当前应用；只关闭再开启开关可能保留旧签名记录。"
+        alert.addButton(withTitle: "打开系统设置")
+        alert.addButton(withTitle: "重新打开应用")
+        alert.addButton(withTitle: "取消")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+                NSWorkspace.shared.open(url)
+            }
+        case .alertSecondButtonReturn:
+            let configuration = NSWorkspace.OpenConfiguration()
+            configuration.createsNewApplicationInstance = true
+            RelaunchHandoff.start(
+                release: { self.releaseHotKey() },
+                launch: { completion in
+                    NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, error in
+                        DispatchQueue.main.async { completion(error) }
+                    }
+                },
+                restore: { self.installHotKey() },
+                terminate: { NSApp.terminate(nil) },
+                onError: { self.statusLabel.stringValue = "重新打开失败：\($0.localizedDescription)" }
+            )
+        default: break
+        }
+    }
+
+    private func releaseHotKey() {
+        if let hotKey { UnregisterEventHotKey(hotKey) }
+        if let hotKeyHandler { RemoveEventHandler(hotKeyHandler) }
+        hotKey = nil
+        hotKeyHandler = nil
+    }
+
     public func applicationWillTerminate(_ notification: Notification) {
         pause(message: "已退出")
         watchdog?.invalidate()
-        if let hotKey { UnregisterEventHotKey(hotKey) }
-        if let hotKeyHandler { RemoveEventHandler(hotKeyHandler) }
+        releaseHotKey()
         for observer in observers {
             NotificationCenter.default.removeObserver(observer)
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
