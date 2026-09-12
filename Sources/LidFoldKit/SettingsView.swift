@@ -35,7 +35,7 @@ struct SettingsView: View {
                     Text(model.status).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
                 }
                 LabeledContent("屏幕角度", value: model.angle.map { "\(Int($0))°" } ?? "—")
-                Text("屏幕低于 \(Int(model.preferences.clearAngle))° 时开始折叠；设置窗口保持清晰，桌面继续随开合变化。")
+                Text("屏幕低于 \(Int(model.preferences.clearAngle))° 时开始折叠。LidFold 的设置窗口不参与折叠，方便随时调整；其他应用随桌面一起变化。")
                     .font(.callout).foregroundStyle(.secondary)
             }
             Section {
@@ -74,7 +74,7 @@ struct SettingsView: View {
             } header: {
                 Text("外观")
             } footer: {
-                Text("屏幕低于设定角度时开始折叠。更改立即保存，桌面实时响应；设置窗口保持清晰可操作。")
+                Text("屏幕低于设定角度时开始折叠，更改立即保存。LidFold 的设置窗口不参与折叠，方便随时调整；其他应用随桌面一起变化。")
             }
             Section {
                 LabeledContent("桌面预览") {
