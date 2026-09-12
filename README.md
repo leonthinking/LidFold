@@ -71,6 +71,12 @@ LidFold 自己的设置窗口不参与折叠，方便随时调整；浏览器、
 - [后续计划](docs/ROADMAP.md)
 - [报告问题或反馈兼容性](https://github.com/leonthinking/LidFold/issues/new/choose)
 
+## 特别鸣谢
+
+感谢 **电丸科技 AK**，他在视频中分享的内容为 LidFold 提供了灵感。
+
+[YouTube](https://www.youtube.com/user/ak47hs) · [哔哩哔哩](https://space.bilibili.com/477782158)
+
 ## 许可证
 
 本项目采用 [MIT License](LICENSE)，版权署名为 leonthinking。允许使用、修改、分发和商用，需保留版权与许可声明。

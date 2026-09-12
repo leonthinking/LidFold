@@ -48,4 +48,12 @@ LidFold's own settings window stays clear and does not fold, so its controls rem
 
 [Build and test](docs/DEVELOPMENT.md) · [Distribution](docs/DISTRIBUTION.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](docs/ROADMAP.md) · [Report an issue](https://github.com/leonthinking/LidFold/issues/new/choose)
 
+## Special thanks
+
+Thanks to **电丸科技 AK** for the inspiration shared in his videos.
+
+[YouTube](https://www.youtube.com/user/ak47hs) · [Bilibili](https://space.bilibili.com/477782158)
+
+## License
+
 Licensed under the [MIT License](LICENSE), copyright leonthinking. Commercial use and redistribution are allowed with the copyright and license notices retained.
