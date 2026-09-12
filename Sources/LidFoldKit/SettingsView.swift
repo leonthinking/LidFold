@@ -6,12 +6,13 @@ struct SettingsView: View {
     @ObservedObject var login: LoginItemController
 
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: .constant(.all)) {
             List(SettingsPane.allCases, selection: $model.pane) { pane in
                 Label(pane.title, systemImage: pane.symbol).tag(pane)
             }
             .listStyle(.sidebar)
             .navigationSplitViewColumnWidth(min: 160, ideal: 185, max: 220)
+            .toolbar(removing: .sidebarToggle)
         } detail: {
             Group {
                 switch model.pane {
