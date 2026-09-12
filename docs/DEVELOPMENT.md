@@ -40,7 +40,7 @@ The script stages and validates the App before replacing `dist/LidFold.app`. It 
 
 ## Testing boundaries
 
-Swift tests cover sensor report parsing, fold math, permission decisions, session lifetimes, preferences, login item state, preview deadlines, and offscreen Metal rendering. Metal tests explicitly skip when a device is unavailable; a CI pass with GPU skips does not establish graphics correctness.
+Swift tests cover sensor report parsing, fold math, permission decisions, session lifetimes, preferences, login item state, preview deadlines, and offscreen Metal rendering. Metal tests explicitly skip when a device is unavailable. GitHub-hosted VMs also run a shader-free clear/readback probe: an exposed device that cannot return even that clear image is reported as unavailable. This hosted-only exemption never skips a LidFold shader pixel mismatch and does not apply to a physical/self-hosted runner. A CI pass with GPU skips does not establish graphics correctness.
 
 Release tooling tests use fixtures and temporary files to verify certificate selection and publication metadata. They do not contact Apple's notarization service or require credentials. Public CI has read-only repository permissions and does not sign, notarize, or upload an App.
 
