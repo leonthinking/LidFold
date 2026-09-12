@@ -22,7 +22,7 @@ class PipelineTests(unittest.TestCase):
         for name in ('release.sh', 'release_support.py'):
             shutil.copy(ROOT / 'scripts' / name, self.root / 'scripts' / name)
         (self.root / 'scripts/signing-identity.sh').write_text('select_signing_identity() { return 0; }\n')
-        (self.root / 'scripts/build-app.sh').write_text('#!/bin/bash\nexit 0\n')
+        (self.root / 'scripts/build-app.sh').write_text('#!/bin/bash\nset -eu\ncp -R dist/distribution/LidFold.app "$LIDFOLD_RELEASE_WORKDIR/LidFold.app"\n')
         app = self.root / 'dist/distribution/LidFold.app/Contents'
         (app / 'MacOS').mkdir(parents=True)
         (app / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleShortVersionString': '1.2.3'}))
@@ -97,6 +97,27 @@ elif name == 'ditto':
         result = self.run_release()
         self.assertNotEqual(result.returncode, 0)
         self.assertTrue(lock.exists())
+
+    def test_parallel_build_lock_is_preserved(self):
+        shutil.copy(ROOT / 'scripts/build-app.sh', self.root / 'scripts/build-app.sh')
+        lock = self.root / '.build/build.lock'
+        lock.mkdir(parents=True)
+        result = subprocess.run(['bash', str(self.root / 'scripts/build-app.sh')],
+                                env={**self.env, 'LIDFOLD_BUILD_MODE': 'development'}, text=True, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Another App build', result.stderr)
+        self.assertTrue(lock.exists())
+
+    def test_release_uses_private_build_output(self):
+        (self.root / 'scripts/build-app.sh').write_text('''#!/bin/bash
+set -eu
+test "$LIDFOLD_RELEASE_WORKDIR" != "$PWD/dist/distribution"
+cp -R dist/distribution/LidFold.app "$LIDFOLD_RELEASE_WORKDIR/LidFold.app"
+rm -rf dist/distribution/LidFold.app
+''')
+        result = self.run_release()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.root / 'dist/releases/1.2.3/SHA256SUMS').exists())
 
 
 if __name__ == '__main__':

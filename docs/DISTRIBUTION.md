@@ -30,7 +30,7 @@ LIDFOLD_NOTARY_PROFILE=LidFold-notary bash scripts/release.sh
 
 The script builds an **arm64** App with hardened runtime and a secure timestamp, verifies its signature, submits it to Apple, requires an `Accepted` result, staples and validates the ticket, and checks Gatekeeper. It then creates a ZIP and SHA-256 manifest under `dist/releases/<version>/`. The App includes its MIT license.
 
-Release builds use `dist/distribution/LidFold.app`; the development App in `dist/LidFold.app` is not replaced. The published ZIP is created only after all signing, notarization, and Gatekeeper checks succeed. Existing version archives are not overwritten.
+The release script builds in its own temporary directory; the development App in `dist/LidFold.app` is not replaced. A manual `LIDFOLD_BUILD_MODE=distribution bash scripts/build-app.sh` build goes to `dist/distribution/LidFold.app`. Builds share a lock, and an in-progress notarization never reads from a destination another build could replace. The published ZIP is created only after all signing, notarization, and Gatekeeper checks succeed. Existing version archives are not overwritten.
 
 ## Publish a verified candidate
 

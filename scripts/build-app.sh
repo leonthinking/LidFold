@@ -11,7 +11,32 @@ if [ "$BUILD_MODE" = distribution ]; then
     BUILD_ARGS+=(--arch arm64)
     SIGN_ARGS=(--options runtime --timestamp)
     DESTINATION="$PWD/dist/distribution/LidFold.app"
+    if [ -n "${LIDFOLD_RELEASE_WORKDIR:-}" ]; then
+        RELEASE_WORKDIR="$(cd "$LIDFOLD_RELEASE_WORKDIR" && pwd -P)"
+        if [ "$(dirname "$RELEASE_WORKDIR")" != "$PWD/.build" ] || [[ "$(basename "$RELEASE_WORKDIR")" != notary.* ]]; then
+            echo "Release work directory must be a private .build/notary.* directory." >&2
+            exit 1
+        fi
+        DESTINATION="$RELEASE_WORKDIR/LidFold.app"
+    fi
 fi
+mkdir -p .build
+BUILD_LOCK="$PWD/.build/build.lock"
+if ! mkdir "$BUILD_LOCK" 2>/dev/null; then
+    echo "Another App build is active (or left a stale .build/build.lock)." >&2
+    exit 1
+fi
+STAGING=""
+cleanup() {
+    if [ -n "$STAGING" ]; then
+        if [ -d "$STAGING/Previous.app" ] && [ ! -e "$DESTINATION" ]; then
+            mv "$STAGING/Previous.app" "$DESTINATION"
+        fi
+        rm -rf "$STAGING"
+    fi
+    rmdir "$BUILD_LOCK"
+}
+trap cleanup EXIT
 ensure_not_running() {
     local status=0
     /usr/bin/pgrep -x LidFold >/dev/null || status=$?
@@ -30,13 +55,6 @@ swift build "${BUILD_ARGS[@]}"
 BIN_PATH="$(swift build "${BUILD_ARGS[@]}" --show-bin-path)"
 STAGING="$(mktemp -d "$PWD/.build/app-staging.XXXXXX")"
 APP="$STAGING/LidFold.app"
-cleanup() {
-    if [ -d "$STAGING/Previous.app" ] && [ ! -e "$DESTINATION" ]; then
-        mv "$STAGING/Previous.app" "$DESTINATION"
-    fi
-    rm -rf "$STAGING"
-}
-trap cleanup EXIT
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_PATH/LidFold" "$APP/Contents/MacOS/LidFold"
 # The app resolves resources from Contents/Resources; SwiftPM tests use Bundle.module.

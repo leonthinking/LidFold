@@ -20,10 +20,9 @@ cleanup() {
     rmdir "$LOCK"
 }
 trap cleanup EXIT
-bash scripts/build-app.sh
 WORK="$(mktemp -d "$PWD/.build/notary.XXXXXX")"
-# Notarize an isolated snapshot, not a build destination that can be replaced.
-ditto "$PWD/dist/distribution/LidFold.app" "$WORK/LidFold.app"
+# Build into a unique destination; a direct distribution build cannot replace it.
+LIDFOLD_RELEASE_WORKDIR="$WORK" bash scripts/build-app.sh
 APP="$WORK/LidFold.app"
 VERSION="$(python3 scripts/release_support.py version "$APP/Contents/Info.plist")"
 FINAL="$PWD/dist/releases/$VERSION"
