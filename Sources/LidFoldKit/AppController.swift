@@ -144,21 +144,23 @@ public final class AppController: NSObject, NSApplicationDelegate, NSWindowDeleg
         previewDeadline.cancel()
         previewUntil = 0
         returnToSettingsAfterPreview = false
-        hideOverlay()
         refreshSystemState()
-        if enabled { settings.status = "已启用，设置期间隐藏效果" }
+        synchronizeSettingsLevel()
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        scheduleRendering()
     }
 
     public func windowWillClose(_ notification: Notification) {
         settings.settingsVisible = false
-        if enabled { settings.status = "已启用"; scheduleRendering() }
+        synchronizeSettingsLevel()
+        scheduleRendering()
     }
 
     public func windowDidMiniaturize(_ notification: Notification) {
         settings.settingsVisible = false
-        if enabled { settings.status = "已启用"; scheduleRendering() }
+        synchronizeSettingsLevel()
+        scheduleRendering()
     }
 
     public func windowDidDeminiaturize(_ notification: Notification) {
@@ -166,8 +168,8 @@ public final class AppController: NSObject, NSApplicationDelegate, NSWindowDeleg
         previewDeadline.cancel()
         previewUntil = 0
         returnToSettingsAfterPreview = false
-        hideOverlay()
-        if enabled { settings.status = "已启用，设置期间隐藏效果" }
+        synchronizeSettingsLevel()
+        scheduleRendering()
     }
 
     @objc private func toggle() { setUserEnabled(!activity.requested) }
@@ -243,7 +245,7 @@ public final class AppController: NSObject, NSApplicationDelegate, NSWindowDeleg
             self.renderer?.update(frame: frame)
             if !self.settings.captureReady {
                 self.settings.captureReady = true
-                self.settings.status = self.settings.settingsVisible ? "已启用，设置期间隐藏效果" : "已启用"
+                self.settings.status = "已启用，随屏幕开合变化"
             }
             self.scheduleRendering()
         }
@@ -285,7 +287,7 @@ public final class AppController: NSObject, NSApplicationDelegate, NSWindowDeleg
     }
 
     private func scheduleRendering() {
-        guard enabled, renderer?.hasFrame == true, let angle, !settings.settingsVisible else { return }
+        guard presentation.canRender, let angle else { return }
         let now = ProcessInfo.processInfo.systemUptime
         guard fold.target(for: angle) > 0 || fold.progress > 0 || previewUntil > now else { return }
         guard renderTimer == nil else { return }
@@ -294,7 +296,7 @@ public final class AppController: NSObject, NSApplicationDelegate, NSWindowDeleg
     }
 
     private func renderTick() {
-        guard enabled, let renderer, renderer.hasFrame, let angle, let overlay, !settings.settingsVisible else {
+        guard presentation.canRender, let renderer, let angle, let overlay else {
             hideOverlay(); return
         }
         let now = ProcessInfo.processInfo.systemUptime
@@ -312,11 +314,30 @@ public final class AppController: NSObject, NSApplicationDelegate, NSWindowDeleg
         if progress < 0.001, target == 0 { hideOverlay(); return }
         renderer.progress = Float(progress)
         if !overlay.isVisible { overlay.orderFrontRegardless() }
+        synchronizeSettingsLevel()
         overlay.metalView.draw()
+    }
+
+    private var presentation: EffectPresentationPolicy {
+        EffectPresentationPolicy(enabled: enabled, hasFrame: renderer?.hasFrame == true,
+                                 hasAngle: angle != nil, settingsVisible: settings.settingsVisible)
+    }
+
+    private func synchronizeSettingsLevel() {
+        // The capture excludes our app. Keep its controls above the transformed
+        // desktop while folding; return to normal window ordering when idle.
+        let level: NSWindow.Level
+        if presentation.keepSettingsAboveEffect, let overlay, overlay.isVisible {
+            level = NSWindow.Level(rawValue: overlay.level.rawValue + 1)
+        } else {
+            level = .normal
+        }
+        if window?.level != level { window?.level = level }
     }
 
     private func hideOverlay() {
         overlay?.orderOut(nil)
+        synchronizeSettingsLevel()
         renderTimer?.invalidate()
         renderTimer = nil
         fold.reset()
@@ -431,8 +452,9 @@ public final class AppController: NSObject, NSApplicationDelegate, NSWindowDeleg
 
     private func showPermissionHelp() {
         settings.settingsVisible = true
-        hideOverlay()
+        showWindow()
         let alert = NSAlert()
+        alert.window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.statusWindow)) + 3)
         alert.messageText = "让屏幕录制授权生效"
         alert.informativeText = "在系统设置中允许 LidFold 录制屏幕。若开关已经开启，请重新打开应用。\n\n若曾使用旧的临时签名版本，请先从授权列表移除 LidFold，再添加当前应用。"
         alert.addButton(withTitle: "打开系统设置")

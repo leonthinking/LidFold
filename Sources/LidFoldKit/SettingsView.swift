@@ -34,6 +34,8 @@ struct SettingsView: View {
                     Text(model.status).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
                 }
                 LabeledContent("屏幕角度", value: model.angle.map { "\(Int($0))°" } ?? "—")
+                Text("屏幕低于 \(Int(model.preferences.clearAngle))° 时开始折叠；设置窗口保持清晰，桌面继续随开合变化。")
+                    .font(.callout).foregroundStyle(.secondary)
             }
             Section {
                 Toggle("登录时启动", isOn: Binding(get: { login.registered }, set: { value in
@@ -71,7 +73,7 @@ struct SettingsView: View {
             } header: {
                 Text("外观")
             } footer: {
-                Text("屏幕低于设定角度时开始折叠。更改立即保存，打开设置时暂时隐藏桌面效果。")
+                Text("屏幕低于设定角度时开始折叠。更改立即保存，桌面实时响应；设置窗口保持清晰可操作。")
             }
             Section {
                 LabeledContent("桌面预览") {
