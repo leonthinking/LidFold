@@ -3,6 +3,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/signing-identity.sh
 select_signing_identity
+BUILD_MODE="${LIDFOLD_BUILD_MODE:-development}"
+BUILD_ARGS=(-c release --disable-sandbox)
+SIGN_ARGS=(--timestamp=none)
+DESTINATION="$PWD/dist/LidFold.app"
+if [ "$BUILD_MODE" = distribution ]; then
+    BUILD_ARGS+=(--arch arm64)
+    SIGN_ARGS=(--options runtime --timestamp)
+    DESTINATION="$PWD/dist/distribution/LidFold.app"
+fi
 ensure_not_running() {
     local status=0
     /usr/bin/pgrep -x LidFold >/dev/null || status=$?
@@ -15,12 +24,12 @@ ensure_not_running() {
     fi
 }
 ensure_not_running
-mkdir -p .build/module-cache dist
+mkdir -p .build/module-cache "$(dirname "$DESTINATION")"
 export CLANG_MODULE_CACHE_PATH="$PWD/.build/module-cache"
-swift build -c release --disable-sandbox
+swift build "${BUILD_ARGS[@]}"
+BIN_PATH="$(swift build "${BUILD_ARGS[@]}" --show-bin-path)"
 STAGING="$(mktemp -d "$PWD/.build/app-staging.XXXXXX")"
 APP="$STAGING/LidFold.app"
-DESTINATION="$PWD/dist/LidFold.app"
 cleanup() {
     if [ -d "$STAGING/Previous.app" ] && [ ! -e "$DESTINATION" ]; then
         mv "$STAGING/Previous.app" "$DESTINATION"
@@ -29,10 +38,11 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp .build/release/LidFold "$APP/Contents/MacOS/LidFold"
+cp "$BIN_PATH/LidFold" "$APP/Contents/MacOS/LidFold"
 # The app resolves resources from Contents/Resources; SwiftPM tests use Bundle.module.
 rm -rf "$APP/Contents/MacOS/LidFold_LidFoldKit.bundle"
 cp Sources/LidFoldKit/Fold.metal "$APP/Contents/Resources/Fold.metal"
+cp LICENSE "$APP/Contents/Resources/LICENSE"
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -49,7 +59,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
-codesign --force --sign "$LIDFOLD_SELECTED_IDENTITY" --timestamp=none "$APP"
+codesign --force --sign "$LIDFOLD_SELECTED_IDENTITY" "${SIGN_ARGS[@]}" "$APP"
 codesign --verify --deep --strict "$APP"
 plutil -lint "$APP/Contents/Info.plist"
 ensure_not_running

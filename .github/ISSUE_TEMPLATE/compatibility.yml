@@ -1,0 +1,23 @@
+name: Compatibility / 兼容性反馈
+description: Share results from a Mac model or OS version.
+body:
+  - type: input
+    id: model
+    attributes:
+      label: Mac model identifier and chip
+      description: Do not include your serial number or hardware UUID.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: macOS and LidFold version
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: What you actually tested
+      description: Live angle, preview, lid movement, pause, login, sleep/wake, lock/unlock, and external displays. Mark untested items explicitly.
+    validations:
+      required: true

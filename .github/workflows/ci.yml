@@ -1,0 +1,51 @@
+name: macOS checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: |
+          sw_vers
+          swift --version
+          python3 --version
+      - name: Release tooling and documentation
+        run: |
+          for script in scripts/*.sh; do bash -n "$script"; done
+          python3 -m unittest discover -s tests_release -v
+      - name: Swift tests
+        shell: bash
+        run: |
+          set -o pipefail
+          bash scripts/test.sh 2>&1 | tee "$RUNNER_TEMP/lidfold-tests.log"
+      - name: Test scope
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### Verification scope'
+            echo 'Hosted tests do not verify the physical lid sensor, screen recording permission, login or sleep/wake.'
+            if [ -f "$RUNNER_TEMP/lidfold-tests.log" ]; then
+              if grep -i 'skip' "$RUNNER_TEMP/lidfold-tests.log"; then
+                echo 'Skipped GPU tests are not a graphics pass. Validate on a physical Mac.'
+              else
+                echo 'No skip message was found; consult the test step result for pass/fail.'
+              fi
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Unsigned source build
+        run: swift build -c release --disable-sandbox

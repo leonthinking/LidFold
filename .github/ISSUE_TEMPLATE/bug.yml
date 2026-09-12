@@ -1,0 +1,32 @@
+name: Bug report / 问题反馈
+description: Report a reproducible problem without sharing personal screen content.
+body:
+  - type: input
+    id: environment
+    attributes:
+      label: Mac model, macOS version, LidFold version
+      placeholder: M4 MacBook Pro (Mac16,1), macOS version, App version or commit
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps and expected / actual behavior
+      description: Include approximate lid angle and whether settings were open. Remove private desktop content from screenshots.
+    validations:
+      required: true
+  - type: dropdown
+    id: permission
+    attributes:
+      label: Screen recording permission
+      options:
+        - Allowed
+        - Not allowed
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: capture
+    attributes:
+      label: What happens in the five-second preview?
+      description: Also describe what happens after quitting and reopening the app.
