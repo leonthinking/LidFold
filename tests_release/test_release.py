@@ -43,6 +43,12 @@ class SigningTests(unittest.TestCase):
         self.assertNotEqual(self.resolve("development", self.identities, "-").returncode, 0)
         self.assertNotEqual(self.resolve("typo", self.identities).returncode, 0)
 
+    def test_unnotarized_mode_needs_no_certificate_and_rejects_personal_identity(self):
+        result = self.resolve("unnotarized", "")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "-")
+        self.assertNotEqual(self.resolve("unnotarized", self.identities, self.dev).returncode, 0)
+
 
 class ReleaseDataTests(unittest.TestCase):
     def test_notarization_only_accepts_exact_success(self):

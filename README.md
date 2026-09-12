@@ -1,6 +1,6 @@
 # LidFold
 
-[English](README.en.md) · [MIT License](LICENSE)
+[下载 v0.2.4](https://github.com/leonthinking/LidFold/releases/tag/v0.2.4) · [English](README.en.md) · [MIT License](LICENSE)
 
 让 MacBook 的桌面随屏幕开合角度折叠。缓慢合上屏幕，桌面与应用画面逐渐变形；展开屏幕，画面恢复正常。
 
@@ -19,6 +19,7 @@ LidFold 是实验性的 macOS 菜单栏工具。画面仅在本机内存中处�
 | 项目 | 当前情况 |
 | --- | --- |
 | 最低部署目标 | macOS 14 |
+| 下载包架构 | Apple Silicon（arm64），不支持 Intel |
 | 已实测硬件 | M4 MacBook Pro（Mac16,1） |
 | 已实测系统 | macOS 26.6.2 |
 | 显示器 | 仅内置屏幕 |
@@ -28,9 +29,18 @@ LidFold 是实验性的 macOS 菜单栏工具。画面仅在本机内存中处�
 
 ## 获取与安装
 
-**目前提供源码，尚无经过 Developer ID 签名和 Apple 公证的 App 下载。** GitHub 的 Source code 压缩包是源码，不是可直接运行的应用。
+下载即用，无需安装 Xcode 或自行构建：
 
-自行构建需要 Xcode 命令行工具及有效签名证书，见 [构建指南](docs/DEVELOPMENT.md)。构建后将 `dist/LidFold.app` 放到固定位置（例如「应用程序」文件夹），然后打开。启用登录自启后请避免移动 App。
+1. 下载 [LidFold 0.2.4 DMG 安装包](https://github.com/leonthinking/LidFold/releases/download/v0.2.4/LidFold-0.2.4-arm64-unnotarized.dmg)，打开后将 **LidFold.app** 拖入 **Applications（应用程序）**，再推出磁盘映像。
+2. 从「应用程序」打开 LidFold，按下方步骤授权并启用效果。启用登录自启后请避免移动 App。
+
+也可下载 [ZIP 版](https://github.com/leonthinking/LidFold/releases/download/v0.2.4/LidFold-0.2.4-arm64-unnotarized.zip)，解压后将 App 移到「应用程序」。发行页附有 SHA-256 校验文件；其中 **Source code** 是源码，普通用户无需下载。
+
+**当前安装包尚未经过 Apple 公证。** 首次打开若提示「无法验证开发者」或「Apple 无法检查是否包含恶意软件」，确认下载自本仓库后，进入 **系统设置 → 隐私与安全性**，在安全性区域点击 **「仍要打开」**，再按提示确认。见 [Apple 官方说明](https://support.apple.com/zh-cn/102445)。此操作与屏幕录制授权是两步独立设置。
+
+升级前先退出 LidFold，再替换 App。当前下载包使用 ad-hoc 签名；升级或从自行构建版切换时，可能需要重新允许打开并授权屏幕录制。若旧权限已开启仍反复提示授权，在系统的屏幕录制列表移除旧 LidFold，再用「+」添加「应用程序」中的新版本并授权，按提示重新打开。
+
+开发者可参考 [构建指南](docs/DEVELOPMENT.md)。
 
 ## 首次授权与启用
 

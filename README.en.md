@@ -20,9 +20,15 @@ The deployment target is macOS 14. Physical behavior has been verified on an **M
 
 ## Installation and permission
 
-**This is currently a source release. No Developer ID signed and Apple-notarized App download is available yet.** GitHub's Source code archives are not runnable applications.
+Download the ready-to-run **Apple Silicon (arm64)** build; Xcode is not needed. Intel Macs are not supported by these downloads.
 
-Follow the [build guide](docs/DEVELOPMENT.md) using your own signing certificate, then place `dist/LidFold.app` in a stable location such as Applications. Avoid moving it after registering launch at login.
+Open the [v0.2.4 DMG](https://github.com/leonthinking/LidFold/releases/download/v0.2.4/LidFold-0.2.4-arm64-unnotarized.dmg), drag **LidFold.app** into **Applications**, eject the image, then open the installed App. A [ZIP](https://github.com/leonthinking/LidFold/releases/download/v0.2.4/LidFold-0.2.4-arm64-unnotarized.zip) and SHA-256 checksums are also available on the [release page](https://github.com/leonthinking/LidFold/releases/tag/v0.2.4). GitHub's Source code archives are for developers.
+
+**This build is not notarized by Apple.** If macOS cannot verify the developer or check for malicious software, confirm that you downloaded it from this repository, then use **System Settings → Privacy & Security → Open Anyway** and confirm. See [Apple's instructions](https://support.apple.com/en-us/102445). This is separate from granting screen recording permission.
+
+Quit before upgrading. Downloads use an ad-hoc signature: upgrading or switching from a locally signed build may require opening approval and screen recording permission again. If an existing enabled grant no longer works, remove the old LidFold entry from screen recording settings, add the new App from Applications with the **+** button, authorize it, then reopen when prompted. Avoid moving the App after registering launch at login. Developers can follow the [build guide](docs/DEVELOPMENT.md).
+
+### First-run permission
 
 1. Open LidFold and enable the desktop effect in General.
 2. Open **System Settings → Privacy & Security → Screen & System Audio Recording** (called **Screen Recording** on some versions).

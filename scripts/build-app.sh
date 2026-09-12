@@ -7,14 +7,19 @@ BUILD_MODE="${LIDFOLD_BUILD_MODE:-development}"
 BUILD_ARGS=(-c release --disable-sandbox)
 SIGN_ARGS=(--timestamp=none)
 DESTINATION="$PWD/dist/LidFold.app"
-if [ "$BUILD_MODE" = distribution ]; then
+if [ "$BUILD_MODE" = distribution ] || [ "$BUILD_MODE" = unnotarized ]; then
     BUILD_ARGS+=(--arch arm64)
-    SIGN_ARGS=(--options runtime --timestamp)
-    DESTINATION="$PWD/dist/distribution/LidFold.app"
+    WORK_PREFIX=notary
+    if [ "$BUILD_MODE" = distribution ]; then
+        SIGN_ARGS=(--options runtime --timestamp)
+    else
+        WORK_PREFIX=unnotarized
+    fi
+    DESTINATION="$PWD/dist/$BUILD_MODE/LidFold.app"
     if [ -n "${LIDFOLD_RELEASE_WORKDIR:-}" ]; then
         RELEASE_WORKDIR="$(cd "$LIDFOLD_RELEASE_WORKDIR" && pwd -P)"
-        if [ "$(dirname "$RELEASE_WORKDIR")" != "$PWD/.build" ] || [[ "$(basename "$RELEASE_WORKDIR")" != notary.* ]]; then
-            echo "Release work directory must be a private .build/notary.* directory." >&2
+        if [ "$(dirname "$RELEASE_WORKDIR")" != "$PWD/.build" ] || [[ "$(basename "$RELEASE_WORKDIR")" != "$WORK_PREFIX".* ]]; then
+            echo "Release work directory must be a private .build/$WORK_PREFIX.* directory." >&2
             exit 1
         fi
         DESTINATION="$RELEASE_WORKDIR/LidFold.app"
@@ -38,6 +43,8 @@ cleanup() {
 }
 trap cleanup EXIT
 ensure_not_running() {
+    # A private release destination cannot replace the running development App.
+    if [ -n "${RELEASE_WORKDIR:-}" ]; then return; fi
     local status=0
     /usr/bin/pgrep -x LidFold >/dev/null || status=$?
     if [ "$status" -eq 0 ]; then
@@ -70,8 +77,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIdentifier</key><string>local.leon.LidFold</string>
 <key>CFBundleExecutable</key><string>LidFold</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.2.3</string>
-<key>CFBundleVersion</key><string>6</string>
+<key>CFBundleShortVersionString</key><string>0.2.4</string>
+<key>CFBundleVersion</key><string>7</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 <key>LSUIElement</key><true/>
 <key>NSHighResolutionCapable</key><true/>

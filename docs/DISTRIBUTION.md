@@ -2,9 +2,27 @@
 
 ## Current status
 
-The repository is ready for source distribution under MIT. A public notarized App has **not** been produced yet: the maintainer's current machine has a development certificate, but no Developer ID Application identity. Source archives in GitHub Releases are not runnable App downloads.
+GitHub Releases provide **unnotarized arm64 DMG and ZIP downloads** under MIT, plus SHA-256 checksums. Source archives are separate. No Developer ID signed, Apple-notarized App has been produced yet.
 
-The release tooling below is prepared for a maintainer with the necessary Apple credentials. It fails rather than publishing an App with an unsuitable signature. Passing fixture tests is not a successful notarization.
+## Unnotarized downloads (current workflow)
+
+```sh
+bash scripts/test.sh
+python3 -m unittest discover -s tests_release -v
+bash scripts/release-unnotarized.sh
+```
+
+This explicitly selects ad-hoc signing without reading or embedding a personal certificate. It builds into a private directory, verifies the signature and arm64 architecture, runs the packaged Metal self-check, produces a ZIP and a DMG with an Applications shortcut and installation instructions, verifies the disk image, and writes SHA256SUMS. Outputs are under `dist/releases-unnotarized/<version>/`; existing versions are never overwritten. It uses the same release/build locks as the notarized workflow and does not replace the authorized development App.
+
+Ad-hoc signatures do not establish a stable developer identity across builds. Updates may require opening approval and a fresh screen recording grant; the README documents removing a stale permission entry and adding the new installed App. Keep the exact archive for each release rather than silently rebuilding it. A stable signing identity for future public updates remains a follow-up.
+
+Before uploading, mount the DMG read-only, verify and self-check its App, check the Applications shortcut, extract and verify the ZIP, and compare the App payloads. Record the exact source commit, architecture and validation limits. Publish DMG, ZIP and SHA256SUMS as a GitHub prerelease while hardware coverage is limited. Never attach the locally certificate-signed development App or private signing material.
+
+First launch follows Apple's **Privacy & Security → Open Anyway** process, separately from screen recording permission. Do not disable Gatekeeper globally. A valid ad-hoc signature and successful self-check are not notarization or a clean-machine installation test.
+
+## Notarized downloads (future workflow)
+
+The separate `scripts/release.sh` requires the Apple credentials below and fails if they are unavailable. Passing fixture tests is not a successful notarization.
 
 ## One-time prerequisites
 
@@ -39,4 +57,4 @@ The release script builds in its own temporary directory; the development App in
 - Attach only the verified ZIP and checksum manifest to a GitHub Release for the exact source commit. Use a prerelease while hardware coverage is limited.
 - Never upload certificates, private keys, local environment files, development bundles, notarization logs, or keychain profiles.
 
-If a certificate/profile is missing or Apple rejects a submission, resolve it before publishing a binary. Do not instruct users to disable Gatekeeper or remove quarantine as the installation method.
+If a certificate/profile is missing or Apple rejects a submission, this notarized workflow must fail. It must never silently fall back to the explicitly separate unnotarized workflow or label an unnotarized download as notarized.

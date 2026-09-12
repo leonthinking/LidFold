@@ -1,11 +1,18 @@
 #!/bin/bash
-# Source this file; the chosen identity is a certificate hash, never an ad-hoc DR.
+# Development keeps a stable certificate; unnotarized packaging is explicitly ad-hoc.
 resolve_signing_identity() {
     local mode identities candidates count requested
     mode="$1"
     identities="$2"
     requested="${3:-}"
     case "$mode" in
+        unnotarized)
+            if [ -n "$requested" ] && [ "$requested" != - ]; then
+                echo "Unnotarized packages must not embed a personal signing certificate." >&2
+                return 1
+            fi
+            LIDFOLD_SELECTED_IDENTITY=-
+            return 0 ;;
         development) candidates="$(printf '%s\n' "$identities" | /usr/bin/awk '/"Apple Development:|"Developer ID Application:/ {print $2}')" ;;
         distribution) candidates="$(printf '%s\n' "$identities" | /usr/bin/awk '/"Developer ID Application:/ {print $2}')" ;;
         *) echo "Unknown build mode: $mode" >&2; return 1 ;;
@@ -24,6 +31,10 @@ resolve_signing_identity() {
 
 select_signing_identity() {
     local identities
+    if [ "${LIDFOLD_BUILD_MODE:-development}" = unnotarized ]; then
+        resolve_signing_identity unnotarized "" "${LIDFOLD_SIGNING_IDENTITY:-}"
+        return
+    fi
     identities="$(/usr/bin/security find-identity -v -p codesigning)" || return
     resolve_signing_identity "${LIDFOLD_BUILD_MODE:-development}" "$identities" "${LIDFOLD_SIGNING_IDENTITY:-}"
 }

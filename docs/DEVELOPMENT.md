@@ -5,7 +5,7 @@
 - macOS 14 or newer, Xcode command line tools, and Python 3 for release tooling tests.
 - Package manifest: Swift tools 5.9. The local verified toolchain is Swift 6.3.3; CI tests its configured Xcode toolchain separately.
 - A MacBook with a readable lid angle sensor for live testing. Hosted CI is not a replacement for physical lid testing.
-- A valid Apple Development or Developer ID Application certificate with its private key in your keychain to package a local App. Tests and `swift build` do not require a certificate.
+- A valid Apple Development or Developer ID Application certificate with its private key in your keychain for the default development package. Tests, `swift build`, and the explicit unnotarized download workflow do not require a certificate.
 
 ```sh
 git clone https://github.com/leonthinking/LidFold.git
@@ -36,7 +36,7 @@ dist/LidFold.app/Contents/MacOS/LidFold --self-check
 open dist/LidFold.app
 ```
 
-The script stages and validates the App before replacing `dist/LidFold.app`. It deliberately refuses ad-hoc signing. For permission setup, follow [the README](../README.md#首次授权与启用).
+The default development mode stages and validates the App before replacing `dist/LidFold.app`, and refuses ad-hoc signing to preserve local permission identity. The separate `bash scripts/release-unnotarized.sh` workflow produces certificate-free DMG and ZIP downloads without replacing that App; it requires Python 3 and a working Metal GPU for the packaged self-check. See [distribution](DISTRIBUTION.md) for the signing and upgrade tradeoffs. For permission setup, follow [the README](../README.md#首次授权与启用).
 
 ## Testing boundaries
 

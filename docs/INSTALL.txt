@@ -1,0 +1,29 @@
+LidFold — 安装 / Installation
+
+需要 Apple Silicon MacBook、macOS 14+ 及可读取的开合角度传感器。
+Requires an Apple Silicon MacBook, macOS 14+ and a readable lid angle sensor.
+
+1. 退出已有的 LidFold，把 LidFold.app 拖入 Applications（应用程序），然后推出磁盘映像。
+   Quit any existing LidFold, drag LidFold.app into Applications, then eject this image.
+2. 从应用程序文件夹打开 LidFold。此版本未经过 Apple 公证。
+   若提示无法验证开发者，确认来自本项目后，进入「系统设置 → 隐私与安全性」点击「仍要打开」。
+   Open LidFold from Applications. This build is not notarized by Apple.
+   If the developer cannot be verified, confirm the source, then use
+   System Settings → Privacy & Security → Open Anyway.
+3. 开启「启用桌面效果」，并在「隐私与安全性 → 屏幕与系统音频录制」中允许 LidFold。
+   按系统提示退出并重新打开，再启用效果。
+   Enable the desktop effect and allow LidFold under Privacy & Security →
+   Screen & System Audio Recording. Quit and reopen if requested, then enable again.
+
+默认低于 105° 时出现效果。设置窗口保持清晰。按 Command–Shift–Escape 暂停。
+The effect starts below 105° by default. Settings stay clear. Command–Shift–Escape pauses.
+
+升级前先退出应用；替换后可能需要重新允许打开和屏幕录制权限。
+若旧授权开关已开但仍提示授权，在录制权限列表移除旧 LidFold，再添加 Applications 中的新 App。
+Quit before upgrading. A replacement may require Open Anyway and screen permission again.
+If an existing enabled grant no longer works, remove the old LidFold entry from screen
+recording settings, then add the new App from Applications and authorize it again.
+
+本版本使用 ad-hoc 签名，不包含开发者身份证书；尚未公证。
+This build uses an ad-hoc signature, without a developer identity certificate or notarization.
+说明 / Guide: https://github.com/leonthinking/LidFold
